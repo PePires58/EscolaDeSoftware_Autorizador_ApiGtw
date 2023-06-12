@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Escola de software - Autorizador - Api Gateway
+Parameters:
+  Environment:
+    Description: Environment
+    Type: String
+Resources:
+  AutorizadorApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub "Escola de Software - Autorizador - Api Gateway - ${Environment}"
+      Description: !Sub "Escola de Software - Autorizador - Api Gateway - ${Environment}"
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      FailOnWarnings: False
+      Mode: overwrite
+
+  AutorizadorApiGatewayRealizarLoginResource:
+    Type: "AWS::ApiGateway::Resource"
+    Properties:
+      RestApiId: !Ref AutorizadorApiGateway
+      ParentId: !GetAtt
+        - AutorizadorApiGateway
+        - RootResourceId
+      PathPart: "realizar-login"
+
+  AutorizadorApiGatewayRealizarLoginPost:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      ApiKeyRequired: False
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        IntegrationResponses:
+          - StatusCode: 200
+          - StatusCode: 400
+          - StatusCode: 500
+        TimeoutInMillis: 2000
+        Type: AWS_PROXY
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Environment}_escoladesoftware-autorizador-lambdarealizarloginfn/invocations"
+      MethodResponses:
+        - StatusCode: 200
+        - StatusCode: 400
+        - StatusCode: 500
+      OperationName: POST /realizar-login
+      ResourceId: !Ref AutorizadorApiGatewayRealizarLoginResource
+      RestApiId: !Ref AutorizadorApiGateway
+
+  AutorizadorApiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: AutorizadorApiGatewayRealizarLoginResource
+    Properties:
+      RestApiId: !Ref AutorizadorApiGateway
+      Description: !Ref Environment
+      StageName: !Ref Environment
+
+  #########  Permissions #########
+  AutorizadorInvokeLambdaRealizarLoginBasedPolicy:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Environment}_escoladesoftware-autorizador-lambdarealizarloginfn"
+      Principal: apigateway.amazonaws.com
+      SourceAccount: !Sub "${AWS::AccountId}"
+      SourceArn:
+        Fn::Join:
+          [
+            "",
+            [
+              "arn:",
+              !Ref AWS::Partition,
+              ":execute-api:",
+              !Ref AWS::Region,
+              ":",
+              !Ref AWS::AccountId,
+              ":",
+              !Ref AutorizadorApiGateway,
+              "/*/POST/realizar-login"
+            ],
+          ]
