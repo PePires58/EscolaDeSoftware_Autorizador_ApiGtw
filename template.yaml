@@ -41,7 +41,8 @@ Resources:
   AutorizadorApiGatewayRealizarLoginPost:
     Type: AWS::ApiGateway::Method
     Properties:
-      AuthorizationType: NONE
+      AuthorizationType: CUSTOM
+      AuthorizerId: !Ref LambdaCustomAuthorizer
       ApiKeyRequired: False
       HttpMethod: POST
       Integration:
@@ -94,10 +95,9 @@ Resources:
       StageName: !Ref Environment
 
   #########  Autorizador #########
-  Authorizer:
+  LambdaCustomAuthorizer:
     Type: 'AWS::ApiGateway::Authorizer'
     Properties:
-      AuthorizerCredentials: null
       AuthorizerResultTtlInSeconds: '0'
       AuthorizerUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Environment}_escoladesoftware-autorizador-lambdaauthorizerfn/invocations"
       Type: TOKEN
