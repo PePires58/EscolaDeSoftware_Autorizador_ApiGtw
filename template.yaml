@@ -41,8 +41,7 @@ Resources:
   AutorizadorApiGatewayRealizarLoginPost:
     Type: AWS::ApiGateway::Method
     Properties:
-      AuthorizationType: CUSTOM
-      AuthorizerId: !Ref LambdaCustomAuthorizer
+      AuthorizationType: NONE
       ApiKeyRequired: False
       HttpMethod: POST
       Integration:
@@ -65,7 +64,8 @@ Resources:
   AutorizadorApiGatewayRefreshTokenPost:
     Type: AWS::ApiGateway::Method
     Properties:
-      AuthorizationType: NONE
+      AuthorizationType: CUSTOM
+      AuthorizerId: !Ref LambdaCustomAuthorizer
       ApiKeyRequired: False
       HttpMethod: POST
       Integration:
