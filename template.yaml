@@ -175,6 +175,6 @@ Resources:
               !Ref AWS::AccountId,
               ":",
               !Ref AutorizadorApiGateway,
-              "/*/*/*"
+              "/authorizers/*/*"
             ],
           ]
