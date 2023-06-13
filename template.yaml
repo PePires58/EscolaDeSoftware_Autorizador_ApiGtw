@@ -88,7 +88,9 @@ Resources:
 
   AutorizadorApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
-    DependsOn: AutorizadorApiGatewayRealizarLoginResource
+    DependsOn: 
+      - AutorizadorApiGatewayRealizarLoginResource
+      - AutorizadorApiGatewayRefreshTokenResource
     Properties:
       RestApiId: !Ref AutorizadorApiGateway
       Description: !Ref Environment
