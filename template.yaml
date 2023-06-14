@@ -177,6 +177,7 @@ Resources:
               !Ref AWS::AccountId,
               ":",
               !Ref AutorizadorApiGateway,
-              "/authorizers/*/*"
+              "/authorizers/",
+              !Ref LambdaCustomAuthorizer
             ],
           ]
