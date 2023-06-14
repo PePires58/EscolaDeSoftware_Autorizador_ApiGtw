@@ -103,7 +103,7 @@ Resources:
       AuthorizerResultTtlInSeconds: '0'
       AuthorizerUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Environment}_escoladesoftware-autorizador-lambdaauthorizerfn/invocations"
       Type: TOKEN
-      IdentitySource: method.request.header.authorizationToken
+      IdentitySource: method.request.header.Authorization
       Name: DefaultLambdaAuthorizer
       RestApiId: !Ref AutorizadorApiGateway
 
