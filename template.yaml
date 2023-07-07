@@ -17,6 +17,7 @@ Resources:
       FailOnWarnings: False
       Mode: overwrite
 
+  ########### ROTAS ########
   AutorizadorApiGatewayRealizarLoginResource:
     Type: "AWS::ApiGateway::Resource"
     Properties:
@@ -25,6 +26,17 @@ Resources:
         - AutorizadorApiGateway
         - RootResourceId
       PathPart: "realizar-login"
+
+  AutorizadorApiGatewayRefreshTokenResource:
+    Type: "AWS::ApiGateway::Resource"
+    Properties:
+      RestApiId: !Ref AutorizadorApiGateway
+      ParentId: !GetAtt
+        - AutorizadorApiGateway
+        - RootResourceId
+      PathPart: "refresh-token"
+
+  ######## INTEGRACOES #############
 
   AutorizadorApiGatewayRealizarLoginPost:
     Type: AWS::ApiGateway::Method
@@ -38,7 +50,7 @@ Resources:
           - StatusCode: 200
           - StatusCode: 400
           - StatusCode: 500
-        TimeoutInMillis: 2000
+        TimeoutInMillis: 2500
         Type: AWS_PROXY
         Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Environment}_escoladesoftware-autorizador-lambdarealizarloginfn/invocations"
       MethodResponses:
@@ -49,13 +61,51 @@ Resources:
       ResourceId: !Ref AutorizadorApiGatewayRealizarLoginResource
       RestApiId: !Ref AutorizadorApiGateway
 
+  AutorizadorApiGatewayRefreshTokenPost:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: CUSTOM
+      AuthorizerId: !Ref LambdaCustomAuthorizer
+      ApiKeyRequired: False
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        IntegrationResponses:
+          - StatusCode: 200
+          - StatusCode: 400
+          - StatusCode: 500
+        TimeoutInMillis: 3000
+        Type: AWS_PROXY
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Environment}_escoladesoftware-autorizador-lambdarefreshtokenfn/invocations"
+      MethodResponses:
+        - StatusCode: 200
+        - StatusCode: 400
+        - StatusCode: 500
+      OperationName: POST /realizar-login
+      ResourceId: !Ref AutorizadorApiGatewayRefreshTokenResource
+      RestApiId: !Ref AutorizadorApiGateway
+
+
   AutorizadorApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
-    DependsOn: AutorizadorApiGatewayRealizarLoginResource
+    DependsOn: 
+      - AutorizadorApiGatewayRealizarLoginResource
+      - AutorizadorApiGatewayRefreshTokenResource
     Properties:
       RestApiId: !Ref AutorizadorApiGateway
       Description: !Ref Environment
       StageName: !Ref Environment
+
+  #########  Autorizador #########
+  LambdaCustomAuthorizer:
+    Type: 'AWS::ApiGateway::Authorizer'
+    Properties:
+      AuthorizerResultTtlInSeconds: '0'
+      AuthorizerUri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Environment}_escoladesoftware-autorizador-lambdaauthorizerfn/invocations"
+      Type: TOKEN
+      IdentitySource: method.request.header.Authorization
+      Name: DefaultLambdaAuthorizer
+      RestApiId: !Ref AutorizadorApiGateway
 
   #########  Permissions #########
   AutorizadorInvokeLambdaRealizarLoginBasedPolicy:
@@ -79,5 +129,55 @@ Resources:
               ":",
               !Ref AutorizadorApiGateway,
               "/*/POST/realizar-login"
+            ],
+          ]
+
+  AutorizadorInvokeLambdaRefreshTokenBasedPolicy:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Environment}_escoladesoftware-autorizador-lambdarefreshtokenfn"
+      Principal: apigateway.amazonaws.com
+      SourceAccount: !Sub "${AWS::AccountId}"
+      SourceArn:
+        Fn::Join:
+          [
+            "",
+            [
+              "arn:",
+              !Ref AWS::Partition,
+              ":execute-api:",
+              !Ref AWS::Region,
+              ":",
+              !Ref AWS::AccountId,
+              ":",
+              !Ref AutorizadorApiGateway,
+              "/*/POST/refresh-token"
+            ],
+          ]
+
+
+  AutorizadorInvokeLambdaAuthorizerBasedPolicy:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Environment}_escoladesoftware-autorizador-lambdaauthorizerfn"
+      Principal: apigateway.amazonaws.com
+      SourceAccount: !Sub "${AWS::AccountId}"
+      SourceArn:
+        Fn::Join:
+          [
+            "",
+            [
+              "arn:",
+              !Ref AWS::Partition,
+              ":execute-api:",
+              !Ref AWS::Region,
+              ":",
+              !Ref AWS::AccountId,
+              ":",
+              !Ref AutorizadorApiGateway,
+              "/authorizers/",
+              !Ref LambdaCustomAuthorizer
             ],
           ]

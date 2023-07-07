@@ -12,6 +12,15 @@ Body:
 - email: string, required
 - senha: string, required
 
+- POST /refresh-token
+
+Rota para criar um novo token a partir de um token ativo.
+
+Body:
+- token: string, required
+Headers:
+- Authorization (bearer): string, required
+
 # Infraestrutura criada
 
 O repositório cria toda a infraestrutura do API Gtw e também as permissões de Invoke para cada lambda que será utilizada.
@@ -33,6 +42,15 @@ This route can be used to login into escola de software, the response will give 
 Body:
 - email: string, required
 - senha: string, required
+
+- POST /refresh-token
+
+This route can be used to refresh your token by your actual token
+
+Body:
+- token: string, required
+Headers:
+- Authorization (bearer): string, required
 
 # Infrastructure created
 
